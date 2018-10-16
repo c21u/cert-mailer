@@ -19,11 +19,11 @@ def send_emails(config):
         reader = csv.DictReader(csvfile)
         for row in reader:
 
-            intro_url = urllib.quote(config.introduction_url.format(row['nonce']), safe=':')
-            row['introduction_url'] = "https://wallet.blockcerts.org/#/introduce-recipient/{}".format(intro_url)
+            cert_url = urllib.quote(config.cert_url.format(row['filename']), safe=':')
+            row['cert_url'] = "https://wallet.blockcerts.org/#/import-certificate/{}".format(cert_url)
 
             imgFile = io.BytesIO()
-            qrcode.make(intro_url).get_image().save(imgFile, 'JPEG')
+            qrcode.make(cert_url).get_image().save(imgFile, 'JPEG')
 
             attachment = Attachment()
             attachment.content = base64.b64encode(imgFile.getvalue()).decode()
@@ -33,10 +33,10 @@ def send_emails(config):
             attachment.content_id = "qrcode"
             row['qrcode'] = '<img src="cid:qrcode" alt="Scannable barcode for use with mobile devices">'
 
-            body = Template(config.introduction_email_body).safe_substitute(row)
+            body = Template(config.cert_email_body).safe_substitute(row)
             content = Content("text/html", body)
 
-            mail = Mail(Email(config.from_email), config.introduction_email_subject, Email(row['email']), content)
+            mail = Mail(Email(config.from_email), config.cert_email_subject, Email(row['email']), content)
             mail.add_attachment(attachment)
             try:
                 response = sg.client.mail.send.post(request_body=mail.get())
@@ -57,9 +57,9 @@ def get_config():
 
     p.add_argument('--from_email', required=True, type=str, help='from email address')
     p.add_argument('--distribution_list', required=True, type=str, help='csv file with emails and substitutions')
-    p.add_argument('--introduction_url', required=True, type=str, help='url for introducing the wallet to the issuer')
-    p.add_argument('--introduction_email_subject', required=True, type=str, help='subject of the email')
-    p.add_argument('--introduction_email_body', required=True, type=str, help='body of the email')
+    p.add_argument('--cert_url', required=True, type=str, help='url for retrieving the cert json')
+    p.add_argument('--cert_email_subject', required=True, type=str, help='subject of the email')
+    p.add_argument('--cert_email_body', required=True, type=str, help='body of the email')
 
     args, _ = p.parse_known_args()
     return args

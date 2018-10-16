@@ -1,3 +1,4 @@
 .env
 venv/
 *.csv
+conf.ini
