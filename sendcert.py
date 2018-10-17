@@ -23,7 +23,7 @@ def send_emails(config):
             row['cert_url'] = "https://wallet.blockcerts.org/#/import-certificate/{}".format(cert_url)
 
             imgFile = io.BytesIO()
-            qrcode.make(cert_url).get_image().save(imgFile, 'JPEG')
+            qrcode.make(row['cert_url']).get_image().save(imgFile, 'JPEG')
 
             attachment = Attachment()
             attachment.content = base64.b64encode(imgFile.getvalue()).decode()
