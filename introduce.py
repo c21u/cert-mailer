@@ -19,8 +19,8 @@ def send_emails(config):
         reader = csv.DictReader(csvfile)
         for row in reader:
 
-            intro_url = urllib.quote(config.introduction_url.format(row['nonce']), safe=':')
-            row['introduction_url'] = "https://wallet.blockcerts.org/#/introduce-recipient/{}".format(intro_url)
+            intro_url = urllib.quote(config.introduction_url, safe=':')
+            row['introduction_url'] = "https://wallet.blockcerts.org/#/introduce-recipient/{}/{}".format(intro_url, row['nonce'])
 
             imgFile = io.BytesIO()
             qrcode.make(intro_url).get_image().save(imgFile, 'JPEG')
