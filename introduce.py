@@ -4,14 +4,12 @@ import base64
 import configargparse
 import csv
 import qrcode
-import sendgrid
 import io
 import os
+import helpers.mandrill
+import helpers.sendgrid
 import urllib.request as urllib
 from string import Template
-from sendgrid.helpers.mail import *
-
-sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('SENDGRID_API_KEY'))
 
 def send_emails(config):
 
@@ -24,29 +22,16 @@ def send_emails(config):
 
             imgFile = io.BytesIO()
             qrcode.make(row['introduction_url']).get_image().save(imgFile, 'JPEG')
+            img = base64.b64encode(imgFile.getvalue()).decode()
 
-            attachment = Attachment()
-            attachment.content = base64.b64encode(imgFile.getvalue()).decode()
-            attachment.type = "image/jpeg"
-            attachment.filename = "qrcode.jpg"
-            attachment.disposition = "inline"
-            attachment.content_id = "qrcode"
             row['qrcode'] = '<img src="cid:qrcode" alt="Scannable barcode for use with mobile devices">'
 
             body = Template(config.introduction_email_body).safe_substitute(row)
-            content = Content("text/html", body)
 
-            mail = Mail(Email(config.from_email), config.introduction_email_subject, Email(row['email']), content)
-            mail.add_attachment(attachment)
-            try:
-                response = sg.client.mail.send.post(request_body=mail.get())
-            except urllib.HTTPError as err:
-                print(err.read())
-                exit()
-
-            print(response.status_code)
-            print(response.body)
-            print(response.headers)
+            if config.mailer == 'sendgrid':
+                helpers.sendgrid.send(config, body, img, row)
+            elif config.mailer == 'mandrill':
+                helpers.mandrill.send(config, body, img, row)
 
 def get_config():
     cwd = os.getcwd()
@@ -60,8 +45,10 @@ def get_config():
     p.add_argument('--introduction_url', required=True, type=str, help='url for introducing the wallet to the issuer')
     p.add_argument('--introduction_email_subject', required=True, type=str, help='subject of the email')
     p.add_argument('--introduction_email_body', required=True, type=str, help='body of the email')
+    p.add_argument('--mailer', required=True, type=str, help='the mail api to use')
 
     args, _ = p.parse_known_args()
+
     return args
 
 def main():
