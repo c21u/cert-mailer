@@ -29,9 +29,9 @@ def send_emails(config):
             body = Template(config.cert_email_body).safe_substitute(row)
 
             if config.mailer == 'sendgrid':
-                helpers.sendgrid.send(config, body, img, row)
+                helpers.sendgrid.send(config, config.cert_email_subject, body, img, row)
             elif config.mailer == 'mandrill':
-                helpers.mandrill.send(config, body, img, row)
+                helpers.mandrill.send(config, config.cert_email_subject, body, img, row)
 
 def get_config():
     cwd = os.getcwd()

@@ -4,9 +4,10 @@ import urllib.request as urllib
 
 mandrill_client = mandrill.Mandrill(os.environ.get('MANDRILL_API_KEY'))
 
-def send(config, body, img, row):
+def send(config, subject, body, img, row):
     message = {
         'from_email': config.from_email,
+        'subject': subject,
         'html': body,
         'auto_text': True,
         'images': [

@@ -5,7 +5,7 @@ from sendgrid.helpers.mail import *
 
 sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('SENDGRID_API_KEY'))
 
-def send(config, body, img, row):
+def send(config, subject, body, img, row):
 
     content = Content("text/html", body)
 
@@ -16,7 +16,7 @@ def send(config, body, img, row):
     attachment.disposition = "inline"
     attachment.content_id = "qrcode"
 
-    mail = Mail(Email(config.from_email), config.cert_email_subject, Email(row['email']), content)
+    mail = Mail(Email(config.from_email), subject, Email(row['email']), content)
     mail.add_attachment(attachment)
     try:
         response = sg.client.mail.send.post(request_body=mail.get())
