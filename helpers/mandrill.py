@@ -25,4 +25,4 @@ def send(config, subject, body, img, row):
         print('A mandrill error occurred: %s - %s' % (e.__class__, e))
         exit()
 
-    print(result.status)
+    print(result)
