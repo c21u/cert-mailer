@@ -1,4 +1,4 @@
-FROM python:3.7-alpine as base
+FROM python:3.6-alpine as base
 
 FROM base as builder
 
@@ -13,8 +13,9 @@ RUN pip install --install-option="--prefix=/install" -r requirements.txt
 FROM base
 
 COPY --from=builder /install /usr/local
+RUN apk add busybox libjpeg-turbo
 
 WORKDIR /app
 COPY . .
 
-CMD [ "bash" ]
+CMD [ "ash" ]
