@@ -6,42 +6,36 @@ import csv
 import qrcode
 import io
 import os
-import helpers.mandrill
-import helpers.sendgrid
 import urllib.request as urllib
+from importlib import import_module
 from string import Template
 
 
-def send_emails(config):
+def send_email(config, row):
+    intro_url = urllib.quote(config.introduction_url, safe=':')
+    row['introduction_url'] = (
+        "https://wallet.blockcerts.org/#/introduce-recipient/{}/{}"
+        .format(intro_url, row['nonce']))
 
+    imgFile = io.BytesIO()
+    qrcode.make(row['introduction_url']).get_image().save(imgFile,
+                                                          'JPEG')
+    img = base64.b64encode(imgFile.getvalue()).decode()
+
+    row['qrcode'] = ('<img src="cid:qrcode" alt="Scannable barcode '
+                     'for use with mobile devices">')
+
+    body = Template(config.introduction_email_body).safe_substitute(row)
+
+    mailer = import_module('helpers.{}'.format(config.mailer)).Mailer()
+    mailer.send(config, config.introduction_email_subject, body, img, row)
+
+
+def send_emails(config):
     with open(config.distribution_list) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-
-            intro_url = urllib.quote(config.introduction_url, safe=':')
-            row['introduction_url'] = (
-                "https://wallet.blockcerts.org/#/introduce-recipient/{}/{}"
-                .format(intro_url, row['nonce']))
-
-            imgFile = io.BytesIO()
-            qrcode.make(row['introduction_url']).get_image().save(imgFile,
-                                                                  'JPEG')
-            img = base64.b64encode(imgFile.getvalue()).decode()
-
-            row['qrcode'] = ('<img src="cid:qrcode" alt="Scannable barcode '
-                             'for use with mobile devices">')
-
-            body = Template(
-                    config.introduction_email_body).safe_substitute(row)
-
-            if config.mailer == 'sendgrid':
-                helpers.sendgrid.send(config,
-                                      config.introduction_email_subject,
-                                      body, img, row)
-            elif config.mailer == 'mandrill':
-                helpers.mandrill.send(config,
-                                      config.introduction_email_subject,
-                                      body, img, row)
+            send_email(config, row)
 
 
 def get_config():

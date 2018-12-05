@@ -6,39 +6,35 @@ import csv
 import qrcode
 import io
 import os
-import helpers.mandrill
-import helpers.sendgrid
 import urllib.request as urllib
+from importlib import import_module
 from string import Template
 
 
-def send_emails(config):
+def send_email(config, row):
+    cert_url = urllib.quote(config.cert_url.format(row['filename']),
+                            safe=':')
+    row['cert_url'] = ("https://wallet.blockcerts.org/#/import-certificate/{}"
+                       .format(cert_url))
 
+    imgFile = io.BytesIO()
+    qrcode.make(row['cert_url']).get_image().save(imgFile, 'JPEG')
+    img = base64.b64encode(imgFile.getvalue()).decode()
+
+    row['qrcode'] = ('<img src="cid:qrcode" alt="Scannable barcode '
+                     'for use with mobile devices">')
+
+    body = Template(config.cert_email_body).safe_substitute(row)
+
+    mailer = import_module('helpers.{}'.format(config.mailer)).Mailer()
+    mailer.send(config, config.cert_email_subject, body, img, row)
+
+
+def send_emails(config):
     with open(config.distribution_list) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-
-            cert_url = urllib.quote(config.cert_url.format(row['filename']),
-                                    safe=':')
-            row['cert_url'] = (
-                    "https://wallet.blockcerts.org/#/import-certificate/{}"
-                    .format(cert_url))
-
-            imgFile = io.BytesIO()
-            qrcode.make(row['cert_url']).get_image().save(imgFile, 'JPEG')
-            img = base64.b64encode(imgFile.getvalue()).decode()
-
-            row['qrcode'] = ('<img src="cid:qrcode" alt="Scannable barcode '
-                             'for use with mobile devices">')
-
-            body = Template(config.cert_email_body).safe_substitute(row)
-
-            if config.mailer == 'sendgrid':
-                helpers.sendgrid.send(config, config.cert_email_subject, body,
-                                      img, row)
-            elif config.mailer == 'mandrill':
-                helpers.mandrill.send(config, config.cert_email_subject, body,
-                                      img, row)
+            send_email(config, row)
 
 
 def get_config():
