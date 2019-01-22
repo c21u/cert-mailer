@@ -22,5 +22,6 @@ class Mailer:
             ],
             'to': [{'email': row['email']}]
         }
-        result = self.mandrill_client.messages.send(message=message, async=False)
+        result = self.mandrill_client.messages.send(message=message,
+                                                    asynchronous=False)
         return result
