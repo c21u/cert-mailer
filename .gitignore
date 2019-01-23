@@ -1,5 +1,7 @@
 .env
 venv/
+dist/
 *.csv
-conf.ini
+*.egg-info/
+*.ini
 __pycache__/
