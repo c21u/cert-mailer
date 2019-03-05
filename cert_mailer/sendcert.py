@@ -26,7 +26,7 @@ def send_email(config, row):
 
     body = Template(config.cert_email_body).safe_substitute(row)
 
-    mailer = import_module('helpers.{}'.format(config.mailer)).Mailer()
+    mailer = import_module('cert_mailer.helpers.{}'.format(config.mailer)).Mailer()
     mailer.send(config, config.cert_email_subject, body, img, row)
 
 
